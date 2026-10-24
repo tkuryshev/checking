@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Тетради">
+<meta name="theme-color" content="#24403a">
+<title>Проверка тетрадей: математика</title>
+<style>
+:root{--board:#24403a;--chalk:#eef3ee;--paper:#fff;--grid:#a9cdea;--red:#d22b2b;--ok:#1f8f4e;--warn:#e08a00;--ink:#1d3f8f}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:var(--board);color:var(--chalk);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif}
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:560px;margin:0 auto;padding:16px 14px 40px}
+h1{font-size:26px;margin:8px 0 4px;font-weight:700}
+p.sub{margin:0 0 18px;opacity:.8;line-height:1.4}
+.card{display:block;width:100%;text-align:left;background:transparent;color:inherit;border:2px dashed rgba(238,243,238,.55);border-radius:6px;padding:14px;margin:0 0 12px;font:inherit;cursor:pointer}
+.card:focus-visible,button:focus-visible,.t:focus-visible{outline:3px solid #ffd34d;outline-offset:2px}
+.card b{font-size:20px}.card span{display:block;opacity:.8;margin-top:4px;font-size:14px}
+.card em{float:right;font-style:normal;font-size:14px;border:1.5px solid var(--chalk);border-radius:20px;padding:2px 10px}
+.bar{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.btn{font:inherit;font-weight:700;border:0;border-radius:6px;padding:12px 16px;background:#ffd34d;color:#222;cursor:pointer;min-height:44px}
+.btn.g{background:transparent;color:var(--chalk);border:2px solid rgba(238,243,238,.55)}
+.sheet{background-color:var(--paper);color:var(--ink);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;border-radius:3px;padding:24px 10px 24px 48px;position:relative;box-shadow:0 6px 0 rgba(0,0,0,.25);overflow:hidden}
+.sheet:before{content:"";position:absolute;left:36px;top:0;bottom:0;width:2px;background:#e88}
+.hd{height:48px;display:flex;align-items:center;font-size:19px}
+.l{display:flex;flex-wrap:wrap;align-items:center;min-height:48px;font-size:23px;gap:0 8px}
+.t{padding:6px 5px;border-radius:50%;cursor:pointer;border:2px solid transparent;user-select:none;-webkit-user-select:none}
+.t.on{border-color:var(--red);color:var(--red);transform:rotate(-2deg)}
+.t.f{border-color:var(--ok);color:var(--ok);background:rgba(31,143,78,.12)}
+.t.m{border:2px dashed var(--warn);background:rgba(224,138,0,.15)}
+.t.x{border-color:var(--red);text-decoration:line-through}
+.n{font-size:16px;color:var(--red);min-height:24px;line-height:24px;transform:rotate(-1deg)}
+.n.m{color:var(--warn)}
+.stamp{position:absolute;right:14px;bottom:18px;border:4px double var(--red);color:var(--red);border-radius:8px;padding:6px 12px;font:700 18px "Trebuchet MS",sans-serif;transform:rotate(-9deg);text-align:center;background:rgba(255,255,255,.7)}
+.stamp big{display:block;font-size:44px;line-height:1}
+.panel{background:rgba(0,0,0,.25);border-radius:6px;padding:12px 14px;margin-top:14px;line-height:1.5}
+.gr{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:10px 0}
+.gr button{font:inherit;font-weight:700;font-size:18px;min-height:44px;border-radius:6px;border:2px solid rgba(238,243,238,.55);background:transparent;color:var(--chalk);cursor:pointer}
+.gr button.s{background:var(--chalk);color:var(--board)}
+.tip{font-size:14px;opacity:.85;margin:0 0 10px}
+@media print{body{background:#fff}.bar,.panel,.tip,.gr,.btn{display:none!important}.sheet{box-shadow:none}.t.on{border-color:#d22b2b}}
+@media (prefers-reduced-motion:no-preference){.stamp{animation:st .25s ease-out}@keyframes st{from{transform:scale(1.8) rotate(-9deg);opacity:0}}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+// Данные: [строка, [индексы слов с ошибкой], пояснение учителя]. Слова делятся по пробелу.
+const S=[
+{n:"Маша К.",c:2,t:"Аккуратная, но спешит с вычитанием и таблицей умножения",f:"'Bradley Hand','Segoe Print','Comic Sans MS',cursive",g:6,L:[
+["24 + 38 = 62"],["56 − 29 = 37",[4],"56 − 29 = 27"],["7 × 8 = 54",[4],"7 × 8 = 56"],["45 : 5 = 9"],["13 + 29 = 42"]]},
+{n:"Артём В.",c:5,t:"Торопыга: дроби и десятичные",f:"'Marker Felt','Segoe Script','Brush Script MT',cursive",g:6,L:[
+["3/4 + 1/4 = 4/8",[4],"знаменатель не складываем: 4/4 = 1"],["2/3 · 3/4 = 1/2"],["0,5 + 0,25 = 0,30",[4],"0,5 + 0,25 = 0,75"],["1/2 + 1/3 = 5/6"],["1,2 · 10 = 12"]]},
+{n:"Лиза Н.",c:7,t:"Любит формулы, но «упрощает» их",f:"'Noteworthy','Segoe Print','Lucida Handwriting',cursive",g:5,L:[
+["(a + b)² = a² + b²",[4,5,6],"(a + b)² = a² + 2ab + b²"],["3x = 12"],["x = 4"],["2(x − 3) = 2x − 3",[4,5,6],"скобку умножили не на оба слагаемых: 2x − 6"]]},
+{n:"Игорь Т.",c:9,t:"Отличник: ошибка одна, зато хитрая",f:"'Snell Roundhand','Segoe Script','Brush Script MT',cursive",g:8,L:[
+["x² − 5x + 6 = 0"],["D = 25 − 24 = 1"],["x₁ = 6 : 2 = 3"],["x₂ = 4 : 2 = 3",[6],"4 : 2 = 2, значит x₂ = 2"],["Проверка: 9 − 15 + 6 = 0"]]}
+];
+const $=s=>document.querySelector(s),A=$("#app");
+let cur=0,marks=new Set(),done=false,gr=0,res=null;
+let best={};try{best=JSON.parse(localStorage.getItem("nb1")||"{}")}catch(e){}
+function save(){try{localStorage.setItem("nb1",JSON.stringify(best))}catch(e){}}
+
+function home(){
+  A.innerHTML=`<h1>Проверка тетрадей</h1><p class="sub">Математика. Выбери тетрадь, найди красной ручкой все ошибки и поставь оценку по десятибалльной шкале.</p>`+
+  S.map((s,i)=>`<button class="card" data-i="${i}"><em>${best[i]||"не проверено"}</em><b>${s.n}, ${s.c} класс</b><span>${s.t}</span></button>`).join("");
+  A.querySelectorAll(".card").forEach(b=>b.onclick=()=>openNb(+b.dataset.i));
+}
+function openNb(i){cur=i;marks=new Set();done=false;gr=0;res=null;draw()}
+
+function draw(){
+  const s=S[cur];
+  let h=`<div class="bar"><button class="btn g" id="back">← К тетрадям</button></div>
+  <p class="tip">${done?"Проверка сдана. Зелёное — найдено, оранжевое — пропущено, зачёркнутое — лишнее.":"Нажимай на слова и числа с ошибками: они обводятся красным. Нажми ещё раз, чтобы снять."}</p>
+  <div class="sheet" style="font-family:${s.f}"><div class="hd">${s.n}, ${s.c} класс. Классная работа.</div>`;
+  s.L.forEach((l,li)=>{
+    const e=l[1]||[];
+    h+=`<div class="l">`+l[0].split(" ").map((w,ti)=>{
+      const k=li+"-"+ti,on=marks.has(k),er=e.includes(ti);
+      let c="t";
+      if(done){ if(on&&er)c+=" f"; else if(on)c+=" x"; else if(er)c+=" m"; }
+      else if(on)c+=" on";
+      return `<span class="${c}" tabindex="0" role="button" aria-pressed="${on}" data-k="${k}">${w}</span>`}).join("")+`</div>`;
+    if(done&&e.length){const hit=e.some(ti=>marks.has(li+"-"+ti));h+=`<div class="n${hit?"":" m"}">${hit?"":"пропущено: "}${l[2]}</div>`}
+  });
+  if(done)h+=`<div class="stamp">ПРОВЕРЕНО<big>${gr}</big></div>`;
+  h+=`<div style="height:${done?90:24}px"></div></div>`;
+  if(!done){
+    h+=`<div class="panel">Оценка за работу:<div class="gr">`+[1,2,3,4,5,6,7,8,9,10].map(n=>`<button data-g="${n}" class="${gr===n?"s":""}">${n}</button>`).join("")+`</div><button class="btn" id="go">Сдать проверку</button></div>`;
+  }else{
+    const d=Math.abs(gr-s.g);
+    h+=`<div class="panel">Найдено ошибок: <b>${res.f} из ${res.t}</b>. Лишних отметок: <b>${res.x}</b>.<br>Твоя оценка: <b>${gr}</b>, оценка по критериям: <b>${s.g}</b>. ${d===0?"Точно в цель!":d===1?"Почти: расхождение в один балл.":"Разошлись на "+d+" б. Пересчитай ошибки и сверься со шкалой."}</div>
+    <div class="bar" style="margin-top:12px"><button class="btn" id="again">Проверить заново</button><button class="btn g" id="prn">Распечатать страницу</button></div>`;
+  }
+  A.innerHTML=h;
+  $("#back").onclick=home;
+  A.querySelectorAll(".t").forEach(t=>{
+    const f=()=>{if(done)return;const k=t.dataset.k;marks.has(k)?marks.delete(k):marks.add(k);draw()};
+    t.onclick=f;t.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();f()}};
+  });
+  A.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{gr=+b.dataset.g;draw()});
+  if($("#go"))$("#go").onclick=submit;
+  if($("#again"))$("#again").onclick=()=>openNb(cur);
+  if($("#prn"))$("#prn").onclick=()=>window.print();
+}
+function submit(){
+  if(!gr){alert("Сначала выбери оценку.");return}
+  const s=S[cur];let f=0,t=0,x=0;
+  s.L.forEach((l,li)=>{
+    const e=l[1]||[];
+    if(e.length){t++;if(e.some(ti=>marks.has(li+"-"+ti)))f++}
+    l[0].split(" ").forEach((_,ti)=>{if(marks.has(li+"-"+ti)&&!e.includes(ti))x++});
+  });
+  res={f,t,x};done=true;
+  best[cur]=f+"/"+t+(x?", лишних "+x:"");save();draw();scrollTo(0,0);
+}
+home();
+</script>
+</body>
+</html>
